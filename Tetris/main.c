@@ -22,28 +22,40 @@
 
 #define HEIGHT 21 // 20+1
 #define WIDTH 12 // 10+2
-   
+
 #define PRINT_BLANCK printf("  ");
 #define PRINT_BLOCK printf("■");
+
+
+// TODO: 
+// 1초 넘었을 때 그려줌 >> 얘먼저해야함
+// SPACE 바 어떻게 입력?
+// 끝날 때
 
 /* Tetromino  */
 // I, J, L, O, S, T, Z
 int tetromino[7][TETRIS_SIZE][TETRIS_SIZE] = {
 	// I
 	{
-		{ 0, 0, 1, 0 }, 
+		{ 0, 1, 0, 0 },
+		{ 0, 1, 0, 0 },
+		{ 0, 1, 0, 0 },
+		{ 0, 1, 0, 0 }
+	},
+	/*{
+		{ 0, 0, 1, 0 },
 		{ 0, 0, 1, 0 },
 		{ 0, 0, 1, 0 },
 		{ 0, 0, 1, 0 }
-	},
-	// J
+	},*/
+	// L
 	{
 		{ 0, 0, 0, 0 },
 		{ 0, 1, 0, 0 },
 		{ 0, 1, 1, 1 },
 		{ 0, 0, 0, 0 }
 	},
-	// L
+	// J
 	{
 		{ 0, 0, 0, 0 },
 		{ 0, 0, 0, 1 },
@@ -85,7 +97,7 @@ int tetromino[7][TETRIS_SIZE][TETRIS_SIZE] = {
 // TESTED
 void rotateBlock(int block[][TETRIS_SIZE]) {
 	int tempBlock[TETRIS_SIZE][TETRIS_SIZE] = { 0 };
-	int i = 0,  j = 0;
+	int i = 0, j = 0;
 
 	/* 값 복사해두기 */
 	memcpy(tempBlock, block, sizeof(tempBlock));
@@ -117,7 +129,7 @@ int returnBlockIndexRandomly() {
 
 	srand((unsigned)clock());
 
-	return rand() % 7 ;
+	return rand() % 7;
 }
 
 // TESTED
@@ -254,46 +266,179 @@ void addBlockDataToGameBoardData(int gameBoard[][WIDTH], int block[][TETRIS_SIZE
 	return;
 }
 
+// NOT TESTED
+int oneInFirstRow(int tempblock[][TETRIS_SIZE]) { // block[0][i]에 1이 있나 // 오른쪽 벽에 있을 때
+	int i = 0;
+	int isOne = 0;
 
-// TODO: 
-// 1초 넘었을 때 그려줌
+	for (i = 0; i < TETRIS_SIZE; i++) {
+		if (tempblock[0][i] == 1) {
+			return isOne = 1;
+		}
+	}
+
+	return isOne;
+}
+int oneInLastRow(int tempblock[][TETRIS_SIZE]) { // block[3][i]에 1이 있나
+	int i = 0;
+	int isOne = 0;
+
+	for (i = 0; i < TETRIS_SIZE; i++) {
+		if (tempblock[TETRIS_SIZE - 1][i] == 1) {
+			return isOne = 1;
+		}
+	}
+
+	return isOne;
+}
+
+// NOT TESTED
+int veryNearByRightWall(int tempBoard[][WIDTH], int* downPosition, int* leftAndRightPosition) {
+	int i = 0, j=0;
+	int sum = 0;
+	int isWall = 1;
+	int oneNotInSecondColumnInI = 0;
+	int tempLeftAndRightPos = *leftAndRightPosition;
+	int gapIsZero = 0;
+
+
+	for (i = 0; i < TETRIS_SIZE; i++) {
+		if (tempBoard[*downPosition - i][tempLeftAndRightPos + 1] == 0) {
+			oneNotInSecondColumnInI = 1;
+		}
+	}
+	for (i = 0; i < TETRIS_SIZE; i++) {
+		if (tempBoard[*downPosition - i][tempLeftAndRightPos + 2] == 0) {
+			gapIsZero = 1;
+		}
+		else {
+			gapIsZero = 0;
+			break;
+		}
+	}
+
+	// 그 외 block
+	if (oneNotInSecondColumnInI || gapIsZero) {
+		tempLeftAndRightPos += 3;
+	}
+	//"I" block이 [][1]에 있을 일때
+	else {
+		tempLeftAndRightPos += 2;
+	}
+
+	for (i = 0; i < TETRIS_SIZE; i++) {
+		if (tempBoard[*downPosition - i][tempLeftAndRightPos] == 0) {
+			return isWall = 0;
+		}
+	}
+	return isWall;
+
+}
+int veryNearByLeftWall(int tempBoard[][WIDTH], int* downPosition, int* leftAndRightPosition) {
+	int i = 0;
+	int isWall = 1;
+	int tempLeftAndRightPos = *leftAndRightPosition;
+	int oneNotInThirdColumnInI = 0;
+
+	for (i = 0; i < TETRIS_SIZE; i++) {
+		if (tempBoard[*downPosition - i][tempLeftAndRightPos + 2] == 0) {
+			oneNotInThirdColumnInI = 1;
+		}
+	}
+
+	if (oneNotInThirdColumnInI) {
+		//tempLeftAndRightPos ;
+	}
+	//"I" block이 [][2]에 있을 일때
+	else {
+		tempLeftAndRightPos += 1;
+	}
+	for (i = 0; i < TETRIS_SIZE; i++) {
+		if (tempBoard[*downPosition - i][tempLeftAndRightPos] == 0) {
+			return isWall = 0;
+		}
+	}
+
+	return isWall;
+}
+
 
 // NOT COMPLETED
 int processUserInput(int arrowKey, int gameBoard[][WIDTH], int block[][TETRIS_SIZE], int* downPosition, int* leftAndRightPosition) {
 	int forChangedPosition = 0;
 	int* changedPosition = &forChangedPosition;
 	int tempBoard[HEIGHT][WIDTH];
-	
+	int tempBlock[TETRIS_SIZE][TETRIS_SIZE];
+
+	int i = 0, j = 0;
+
 	/*
 	 * 게임판 print는 gameBoard로만 한다
 	 * 게임판 data 조작은 tempBoard로만 한다
 	 */
 	memcpy(tempBoard, gameBoard, sizeof(tempBoard));
+	memcpy(tempBlock, block, sizeof(tempBlock));
 
 	switch (arrowKey) {
 
-	case UP: /////////////////////////////////////////////////////////////// 벽에 딱 붙어서 rotate 하면 벽에 딱 달라 붙음 ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ
+	case UP: /////////////////////////////////////////////////////////////// 
 		if (*downPosition != 0) {
-			subtractBlockFromGameBoard(tempBoard, block, downPosition, leftAndRightPosition);
+			subtractBlockFromGameBoard(tempBoard, tempBlock, downPosition, leftAndRightPosition);
 		}
-		rotateBlock(block);
-		addBlockDataToGameBoardData(tempBoard, block, downPosition, leftAndRightPosition);
+
+		// I block에 대한 예외처리
+		if (*leftAndRightPosition == -1 || *leftAndRightPosition == 0) {
+			while (veryNearByLeftWall(tempBoard, downPosition, leftAndRightPosition) && oneInLastRow(tempBlock)) {
+				*leftAndRightPosition += 1;
+				addBlockDataToGameBoardData(tempBoard, tempBlock, downPosition, leftAndRightPosition);
+				if (checkWhetherAbleToMove(tempBoard, downPosition, leftAndRightPosition) == 1) {
+					memcpy(gameBoard, tempBoard, sizeof(tempBoard));
+					memcpy(block, tempBlock, sizeof(tempBlock));
+				}
+				else {
+					memcpy(tempBoard, gameBoard, sizeof(tempBoard));
+				}
+				subtractBlockFromGameBoard(tempBoard, tempBlock, downPosition, leftAndRightPosition);
+			}
+		}
+		else if (*leftAndRightPosition == WIDTH - TETRIS_SIZE || *leftAndRightPosition == WIDTH - TETRIS_SIZE + 1) {
+			while (veryNearByRightWall(tempBoard, downPosition, leftAndRightPosition) && oneInFirstRow(tempBlock)) {
+				*leftAndRightPosition -= 1;
+				addBlockDataToGameBoardData(tempBoard, tempBlock, downPosition, leftAndRightPosition);
+				if (checkWhetherAbleToMove(tempBoard, downPosition, leftAndRightPosition) == 1) {
+					memcpy(gameBoard, tempBoard, sizeof(tempBoard));
+					memcpy(block, tempBlock, sizeof(tempBlock));
+				}
+				else {
+					memcpy(tempBoard, gameBoard, sizeof(tempBoard));
+				}
+				subtractBlockFromGameBoard(tempBoard, tempBlock, downPosition, leftAndRightPosition);
+			}
+		}
+
+		rotateBlock(tempBlock);
+
+		addBlockDataToGameBoardData(tempBoard, tempBlock, downPosition, leftAndRightPosition);
 		if (checkWhetherAbleToMove(tempBoard, downPosition, leftAndRightPosition) == 1) {
 			memcpy(gameBoard, tempBoard, sizeof(tempBoard));
+			memcpy(block, tempBlock, sizeof(tempBlock));
 		}
 		else {
 			memcpy(tempBoard, gameBoard, sizeof(tempBoard));
 		}
+
+
 		break;
 
 	case DOWN:
 		if (*downPosition != 0) {
-			subtractBlockFromGameBoard(tempBoard, block, downPosition, leftAndRightPosition);
+			subtractBlockFromGameBoard(tempBoard, tempBlock, downPosition, leftAndRightPosition);
 		}
 		*changedPosition = *downPosition + 1;
-		addBlockDataToGameBoardData(tempBoard, block, changedPosition, leftAndRightPosition);
+		addBlockDataToGameBoardData(tempBoard, tempBlock, changedPosition, leftAndRightPosition);
 		if (checkWhetherAbleToMove(tempBoard, changedPosition, leftAndRightPosition) == 1) {
 			memcpy(gameBoard, tempBoard, sizeof(tempBoard));
+			memcpy(block, tempBlock, sizeof(tempBlock));
 			*downPosition = *changedPosition;
 		}
 		else {
@@ -305,12 +450,14 @@ int processUserInput(int arrowKey, int gameBoard[][WIDTH], int block[][TETRIS_SI
 
 	case RIGHT:
 		if (*downPosition != 0) {
-			subtractBlockFromGameBoard(tempBoard, block, downPosition, leftAndRightPosition);
+			subtractBlockFromGameBoard(tempBoard, tempBlock, downPosition, leftAndRightPosition);
 		}
+
 		*changedPosition = *leftAndRightPosition + 1;
-		addBlockDataToGameBoardData(tempBoard, block, downPosition, changedPosition);
+		addBlockDataToGameBoardData(tempBoard, tempBlock, downPosition, changedPosition);
 		if (checkWhetherAbleToMove(tempBoard, downPosition, changedPosition) == 1) {
 			memcpy(gameBoard, tempBoard, sizeof(tempBoard));
+			memcpy(block, tempBlock, sizeof(tempBlock));
 			*leftAndRightPosition = *changedPosition;
 		}
 		else {
@@ -320,12 +467,13 @@ int processUserInput(int arrowKey, int gameBoard[][WIDTH], int block[][TETRIS_SI
 
 	case LEFT:
 		if (*downPosition != 0) {
-			subtractBlockFromGameBoard(tempBoard, block, downPosition, leftAndRightPosition);
+			subtractBlockFromGameBoard(tempBoard, tempBlock, downPosition, leftAndRightPosition);
 		}
 		*changedPosition = *leftAndRightPosition - 1;
-		addBlockDataToGameBoardData(tempBoard, block, downPosition, changedPosition);
+		addBlockDataToGameBoardData(tempBoard, tempBlock, downPosition, changedPosition);
 		if (checkWhetherAbleToMove(tempBoard, downPosition, changedPosition) == 1) {
 			memcpy(gameBoard, tempBoard, sizeof(tempBoard));
+			memcpy(block, tempBlock, sizeof(tempBlock));
 			*leftAndRightPosition = *changedPosition;
 		}
 		else {
@@ -333,32 +481,36 @@ int processUserInput(int arrowKey, int gameBoard[][WIDTH], int block[][TETRIS_SI
 		}
 		break;
 
-	//case SPACE:
-	//	while (1) {
-	//		if (*downPosition != 0) {
-	//			subtractBlockFromGameBoard(tempBoard, block, downPosition, leftAndRightPosition);
-	//		}
-	//		*changedPosition = *downPosition + 1;
-	//		addBlockDataToGameBoardData(tempBoard, block, changedPosition, leftAndRightPosition);
-	//		if (checkWhetherAbleToMove(tempBoard, changedPosition, leftAndRightPosition) == 1) {
-	//			memcpy(gameBoard, tempBoard, sizeof(tempBoard));
-	//			*downPosition = *changedPosition;
-	//		}
-	//		else {
-	//			memcpy(tempBoard, gameBoard, sizeof(tempBoard));
-	//			break;
-	//		}
-	//	}
-	//	break;
+		//case SPACE:
+		//	while (1) {
+		//		if (*downPosition != 0) {
+		//			subtractBlockFromGameBoard(tempBoard, block, downPosition, leftAndRightPosition);
+		//		}
+		//		*changedPosition = *downPosition + 1;
+		//		addBlockDataToGameBoardData(tempBoard, block, changedPosition, leftAndRightPosition);
+		//		if (checkWhetherAbleToMove(tempBoard, changedPosition, leftAndRightPosition) == 1) {
+		//			memcpy(gameBoard, tempBoard, sizeof(tempBoard));
+		//			*downPosition = *changedPosition;
+		//		}
+		//		else {
+		//			memcpy(tempBoard, gameBoard, sizeof(tempBoard));
+		//			break;
+		//		}
+		//	}
+		//	break;
 
-	default :
+	default:
 		break;
 	}
 
 	return 0; // 블럭 다 안떨어짐, 계속 조작 받을수 있음
 }
 
-
+////////////////////////////
+//int gameOver(int gameBoard[][WIDTH], int* downPosition) {
+//	int i = 0, j = 0;
+//
+//}
 
 // FUNCTION FOR TEST
 void functionForTest() {
@@ -368,10 +520,11 @@ void functionForTest() {
 	int* downPosition;
 	int* leftAndRightPosition;
 
+
 	int fallingBlock[TETRIS_SIZE][TETRIS_SIZE];
 	int tempBoard[HEIGHT][WIDTH]; // oneLineFilled 일때 사용
 
-	int userInputKeyCode; 
+	int userInputKeyCode;
 
 	int mustReturnNewBlock = 1;
 
@@ -379,32 +532,32 @@ void functionForTest() {
 	leftAndRightPosition = &indexLeftAndRight;
 
 	makeBasicGameBoard(gameBoard);
-	
+
 	printf("************\n");
 	printf("THIS IS TEST\n");
 	printf("************\n\n");
 
 	while (1) {
 		printBoard(gameBoard);
-		
+
 		/* 블럭이 내려옴 */
 		if (mustReturnNewBlock) {
+
 			memcpy(fallingBlock, tetromino[returnBlockIndexRandomly()], sizeof(fallingBlock));
-			//memcpy(fallingBlock, tetromino[0], sizeof(fallingBlock)); // tetromino 1, 2 ERROR // 맨밑일때 // J L 딱 그 모양일때만 ////////////////////////////////////////////////////
+			//memcpy(fallingBlock, tetromino[0], sizeof(fallingBlock)); 
 			mustReturnNewBlock = 0;
 			*downPosition = 0;
 			*leftAndRightPosition = 4;
 		}
-		
+
 		/* 사용자 조작 */
-		// TODO: SPACE 바 어떻게 입력?
 		if (_kbhit()) {
 			if (_getch() != 0xE0) {}
 			userInputKeyCode = _getch();
-			
+
 			mustReturnNewBlock = processUserInput(userInputKeyCode, gameBoard, fallingBlock, downPosition, leftAndRightPosition);
 		}
-		
+
 		/* 다시 그리기 */
 		printBoard(gameBoard);
 
@@ -412,10 +565,10 @@ void functionForTest() {
 		if (mustReturnNewBlock == 1) {
 			memcpy(tempBoard, gameBoard, sizeof(tempBoard));
 
-			for (i = 0; i < HEIGHT-1; i++) {
+			for (i = 0; i < HEIGHT - 1; i++) {
 				/* 한 줄 지울지 말지 체크 */
 				if (oneLineFilled(tempBoard[i]) == 1) {
-					for (j = 0; (i - j) > 0 ; j++) {
+					for (j = 0; (i - j) > 0; j++) {
 						memcpy(tempBoard[i - j], gameBoard[i - j - 1], sizeof(int) * WIDTH);
 					}
 					memset(tempBoard[0], 0, sizeof(int) * WIDTH);
@@ -425,8 +578,12 @@ void functionForTest() {
 					printBoard(gameBoard);
 				}
 			}
+			/* GAME OVER 조건 */
+			if (*downPosition <= 0) {
+				return;
+			}
 		}
-		
+
 		userInputKeyCode = -1;
 	}
 
@@ -438,7 +595,7 @@ void functionForTest() {
 int main(void) {
 
 	int i = 0, j = 0;
-	
+
 	functionForTest();
 
 	//int* leftAndRightPosition = 0;
@@ -466,7 +623,7 @@ int main(void) {
 	//	//	}
 	//	//}
 	//}
-	
+
 
 
 	return 0;
