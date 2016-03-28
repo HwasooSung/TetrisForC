@@ -20,6 +20,7 @@
 #define SPACE 32
 #define ESC 27
 
+/* Game Board */
 #define HEIGHT 21 // 20+1
 #define WIDTH 12 // 10+2
 
@@ -29,8 +30,8 @@
 
 // TODO: 
 // 1초 넘었을 때 그려줌 >> 얘먼저해야함
-// SPACE 바 어떻게 입력?
 // 끝날 때
+// 맨 위에서 벽으로 갔을 때 블럭 멈춰지는 버그
 
 /* Tetromino  */
 // I, J, L, O, S, T, Z
@@ -294,7 +295,7 @@ int oneInLastRow(int tempblock[][TETRIS_SIZE]) { // block[3][i]에 1이 있나
 
 // NOT TESTED
 int veryNearByRightWall(int tempBoard[][WIDTH], int* downPosition, int* leftAndRightPosition) {
-	int i = 0, j=0;
+	int i = 0, j = 0;
 	int sum = 0;
 	int isWall = 1;
 	int oneNotInSecondColumnInI = 0;
@@ -453,6 +454,12 @@ int processUserInput(int arrowKey, int gameBoard[][WIDTH], int block[][TETRIS_SI
 			subtractBlockFromGameBoard(tempBoard, tempBlock, downPosition, leftAndRightPosition);
 		}
 
+		/*if ((*leftAndRightPosition + TETRIS_SIZE - 1) != WIDTH - 2) {
+			
+		}
+		else {
+			break;
+		}*/
 		*changedPosition = *leftAndRightPosition + 1;
 		addBlockDataToGameBoardData(tempBoard, tempBlock, downPosition, changedPosition);
 		if (checkWhetherAbleToMove(tempBoard, downPosition, changedPosition) == 1) {
@@ -469,6 +476,13 @@ int processUserInput(int arrowKey, int gameBoard[][WIDTH], int block[][TETRIS_SI
 		if (*downPosition != 0) {
 			subtractBlockFromGameBoard(tempBoard, tempBlock, downPosition, leftAndRightPosition);
 		}
+
+		/*if (*leftAndRightPosition != 0) {
+			
+		}
+		else {
+			break;
+		}*/
 		*changedPosition = *leftAndRightPosition - 1;
 		addBlockDataToGameBoardData(tempBoard, tempBlock, downPosition, changedPosition);
 		if (checkWhetherAbleToMove(tempBoard, downPosition, changedPosition) == 1) {
@@ -481,23 +495,23 @@ int processUserInput(int arrowKey, int gameBoard[][WIDTH], int block[][TETRIS_SI
 		}
 		break;
 
-		//case SPACE:
-		//	while (1) {
-		//		if (*downPosition != 0) {
-		//			subtractBlockFromGameBoard(tempBoard, block, downPosition, leftAndRightPosition);
-		//		}
-		//		*changedPosition = *downPosition + 1;
-		//		addBlockDataToGameBoardData(tempBoard, block, changedPosition, leftAndRightPosition);
-		//		if (checkWhetherAbleToMove(tempBoard, changedPosition, leftAndRightPosition) == 1) {
-		//			memcpy(gameBoard, tempBoard, sizeof(tempBoard));
-		//			*downPosition = *changedPosition;
-		//		}
-		//		else {
-		//			memcpy(tempBoard, gameBoard, sizeof(tempBoard));
-		//			break;
-		//		}
-		//	}
-		//	break;
+	case SPACE:
+		while (1) {
+			if (*downPosition != 0) {
+				subtractBlockFromGameBoard(tempBoard, block, downPosition, leftAndRightPosition);
+			}
+			*changedPosition = *downPosition + 1;
+			addBlockDataToGameBoardData(tempBoard, block, changedPosition, leftAndRightPosition);
+			if (checkWhetherAbleToMove(tempBoard, changedPosition, leftAndRightPosition) == 1) {
+				memcpy(gameBoard, tempBoard, sizeof(tempBoard));
+				*downPosition = *changedPosition;
+			}
+			else {
+				memcpy(tempBoard, gameBoard, sizeof(tempBoard));
+				return 1;
+			}
+		}
+		break;
 
 	default:
 		break;
@@ -525,6 +539,7 @@ void functionForTest() {
 	int tempBoard[HEIGHT][WIDTH]; // oneLineFilled 일때 사용
 
 	int userInputKeyCode;
+	int tempKeyCode;
 
 	int mustReturnNewBlock = 1;
 
@@ -543,8 +558,8 @@ void functionForTest() {
 		/* 블럭이 내려옴 */
 		if (mustReturnNewBlock) {
 
-			memcpy(fallingBlock, tetromino[returnBlockIndexRandomly()], sizeof(fallingBlock));
-			//memcpy(fallingBlock, tetromino[0], sizeof(fallingBlock)); 
+			//memcpy(fallingBlock, tetromino[returnBlockIndexRandomly()], sizeof(fallingBlock));
+			memcpy(fallingBlock, tetromino[3], sizeof(fallingBlock)); 
 			mustReturnNewBlock = 0;
 			*downPosition = 0;
 			*leftAndRightPosition = 4;
@@ -552,9 +567,14 @@ void functionForTest() {
 
 		/* 사용자 조작 */
 		if (_kbhit()) {
-			if (_getch() != 0xE0) {}
-			userInputKeyCode = _getch();
-
+			tempKeyCode = _getch();
+			if (tempKeyCode == 0xE0) {
+				userInputKeyCode = _getch();
+			}
+			else if (tempKeyCode == SPACE) {
+				userInputKeyCode = SPACE;
+			}
+			
 			mustReturnNewBlock = processUserInput(userInputKeyCode, gameBoard, fallingBlock, downPosition, leftAndRightPosition);
 		}
 
@@ -579,9 +599,7 @@ void functionForTest() {
 				}
 			}
 			/* GAME OVER 조건 */
-			if (*downPosition <= 0) {
-				return;
-			}
+			
 		}
 
 		userInputKeyCode = -1;
